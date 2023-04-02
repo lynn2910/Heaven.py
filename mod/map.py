@@ -1,11 +1,11 @@
 import pygame
 from typing import List, Dict
-from entities.companion import Companion
 
 from mod.assets import Assets
 from entities.mod import Entity, EntityType
 from mod.camera import *
 from entities.player import Player
+from mod.collisions import *
 
 
 class EntitiesContainer:
@@ -64,15 +64,19 @@ class ZoneType(Enum):
 
 
 class Zone:
-    def __init__(self, map_background: pygame.Surface, layers: List[Tuple[int, pygame.Surface]] = [],
-                 collisions: List[Tuple[int, int, int, int]] = [], entities: List[Entity] = []) -> None:
+    def __init__(self,
+            map_background: pygame.Surface,
+            layers: List[Tuple[int, pygame.Surface]] = [],
+            collisions: List[Collision] = [],
+            entities: Dict[int, List[Entity]] = []
+        ) -> None:
         self.map = map_background
         self.layers = layers
         self.layers.sort(key=lambda l: l[0])
         self.collisions = collisions
         self.entities = entities
 
-    def draw(self, screen: pygame.Surface, camera: Camera, player: Player, zone_decals: Tuple[int, int], assets: Assets, map, companion: Companion) -> None:
+    def draw(self, screen: pygame.Surface, camera: Camera, player: Player, zone_decals: Tuple[int, int], assets: Assets, map) -> None:
         coords = (
             camera.x + (zone_decals[0] // 2),
             camera.y + (zone_decals[1] // 2)
@@ -83,16 +87,35 @@ class Zone:
 
         player_drawn = False
 
+        if 0 in self.entities:
+            # entities on this layer
+            for entity in self.entities[0]:
+                try:
+                    entity.draw(screen, assets, camera)
+                except:
+                    pass
+
         for i, layer in self.layers:
             if (not player_drawn) and player.layer == i:
                 player.draw(screen, assets, camera, map)
-                companion.draw(screen, assets, camera, map)
+                # companion.draw(screen, assets, camera, map)
                 player_drawn = True
             screen.blit(layer, coords)
 
+            print(i, i in self.entities)
+            # draw entities on this layer
+            if i in self.entities:
+                print(self.entities[i])
+                # entities on this layer
+                for entity in self.entities[i]:
+                    try:
+                        entity.draw(screen, assets, camera)
+                    except:
+                        pass
+
         if not player_drawn:
             player.draw(screen, assets, camera, map)
-            companion.draw(screen, assets, camera, map)
+            # companion.draw(screen, assets, camera, map)
 
         player_x = (screen.get_width() // 2)
         player_y = (screen.get_height() // 2)
@@ -116,26 +139,30 @@ class Map:
                 ],
                 collisions=[
                     # Murs
-                    (0, 0, CASE_SIZE, CASE_SIZE * 25), # Gauche
-                    (0, 0, CASE_SIZE * 8, CASE_SIZE), # Haut (partie gauche)
-                    (-(CASE_SIZE * 12), 0, CASE_SIZE * 13, CASE_SIZE), # Haut (partie droite)
-                    (-(CASE_SIZE * 24), 0, CASE_SIZE, CASE_SIZE * 25), # Droite
-                    (-(CASE_SIZE), -(CASE_SIZE * 24), CASE_SIZE * 25, CASE_SIZE), # Bas
+                    WallCollision(0, 0, CASE_SIZE, CASE_SIZE * 25), # Gauche
+                    WallCollision(0, 0, CASE_SIZE * 8, CASE_SIZE), # Haut (partie gauche)
+                    WallCollision(CASE_SIZE * 12, 0, CASE_SIZE * 13, CASE_SIZE), # Haut (partie droite)
+                    WallCollision(CASE_SIZE * 24, 0, CASE_SIZE, CASE_SIZE * 25), # Droite
+                    WallCollision(CASE_SIZE, CASE_SIZE * 24, CASE_SIZE * 25, CASE_SIZE), # Bas
 
                     # Cailloux
-                    (-(CASE_SIZE * 6) - 25, -(CASE_SIZE * 12.5), CASE_SIZE + 10, CASE_SIZE * 0.5), # Gauche Haut
-                    (-(CASE_SIZE * 6) - 25, -(CASE_SIZE * 17.5) - 7, CASE_SIZE + 10, CASE_SIZE * 0.5), # Gauche Bas
-                    (-(CASE_SIZE * 15) - 25, -(CASE_SIZE * 19.5) - 7, CASE_SIZE + 10, CASE_SIZE * 0.5), # Bas (ou: Droite bas)
-                    (-(CASE_SIZE * 17) - 25, -(CASE_SIZE * 13.5) - 7, CASE_SIZE + 10, CASE_SIZE * 0.5), # Droite Milieu
-                    (-(CASE_SIZE * 12) - 25, -(CASE_SIZE * 7.5) - 7, CASE_SIZE + 10, CASE_SIZE * 0.5), # Milieu Haut
+                    RockCollision(CASE_SIZE * 6 + 25, CASE_SIZE * 12.5 + 17),
+                    RockCollision(CASE_SIZE * 6 + 25, CASE_SIZE * 17.5 + 17),
+                    RockCollision(CASE_SIZE * 15 + 25, CASE_SIZE * 19.5 + 17),
+                    RockCollision(CASE_SIZE * 17 + 25, CASE_SIZE * 13.5 + 17),
+                    RockCollision(CASE_SIZE * 12 + 25, CASE_SIZE * 7.5 + 17),
 
                     # Troncs
-                    (-(CASE_SIZE * 3) - (CASE_SIZE * 0.75), -(CASE_SIZE * 16), CASE_SIZE * 0.5, (CASE_SIZE // 4) - 10), # Droite Milieu
-                    (-(CASE_SIZE * 4) - (CASE_SIZE * 0.75), -(CASE_SIZE * 5), CASE_SIZE * 0.5, (CASE_SIZE // 4) - 10), # Haut coin Gauche
-                    (-(CASE_SIZE * 6) - (CASE_SIZE * 0.75), -(CASE_SIZE * 10), CASE_SIZE * 0.5, (CASE_SIZE // 4) - 10), # Gauche Milieu
-                    (-(CASE_SIZE * 22) - (CASE_SIZE * 0.75), -(CASE_SIZE * 13), CASE_SIZE * 0.5, (CASE_SIZE // 4) - 10), # Droite extrème Milieu
+                    TreeCollision(CASE_SIZE * 3 + (CASE_SIZE * 0.75), CASE_SIZE * 16), # Droite Milieu
+                    TreeCollision(CASE_SIZE * 4 + (CASE_SIZE * 0.75), CASE_SIZE * 5), # Haut coin Gauche
+                    TreeCollision(CASE_SIZE * 6 + (CASE_SIZE * 0.75), CASE_SIZE * 10), # Gauche Milieu
+                    TreeCollision(CASE_SIZE * 22 + (CASE_SIZE * 0.75), CASE_SIZE * 13), # Droite extrème Milieu
                 ],
-                entities=[]
+                entities={
+                    0: [
+                        Entity((CASE_SIZE * 5, CASE_SIZE * 5), 10, EntityType.SPIRIT, "")
+                    ]
+                }
             )
         }
 
@@ -229,11 +256,11 @@ class Map:
     #        )
     #    )
 
-    def draw(self, screen: pygame.Surface, assets: Assets, camera: Camera, player: Player, companion: Companion) -> None:
+    def draw(self, screen: pygame.Surface, assets: Assets, camera: Camera, player: Player) -> None:
         # self.draw_grid(screen, camera)
         # self.draw_zone(screen, assets, camera)
 
-        self.actual_zone.draw(screen, camera, player, self.zone_decals, assets, self, companion)
+        self.actual_zone.draw(screen, camera, player, self.zone_decals, assets, self)
         return
 
         # test

@@ -8,7 +8,7 @@ class Spirit(Entity):
     def __init__(self, x = 0, y = 0) -> None:
         super().__init__((x, y), 5, EntityType.SPIRIT, "test_spirit")
     
-    def update(self, frequence: pygame.time.Clock):
+    def update(self, frequence: pygame.time.Clock, delta: float):
         pass
 
     def draw(self, screen: pygame.Surface, assets: Assets, camera: Camera):

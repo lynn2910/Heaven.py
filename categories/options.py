@@ -2,8 +2,6 @@ import pygame
 from constants import *
 from typing import List, Tuple
 
-from mod.utils import fps_coeff
-
 
 class Options:
     def __init__(self) -> None:
@@ -174,7 +172,7 @@ class Options:
         self.actual_page = 0
         self.row_selected = 0
 
-    def update(self, frequence: pygame.time.Clock):
+    def update(self, frequence: pygame.time.Clock, delta: float):
         
         keys = pygame.key.get_pressed()
         if (not self.show_dev_page) and keys[pygame.K_h] and keys[pygame.K_e] and keys[pygame.K_a] and keys[pygame.K_v] and keys[pygame.K_n]:
@@ -182,13 +180,13 @@ class Options:
             self.MAX_PAGES += 1
 
         if self.key_cooldown <= 0:
-            self.key_cooldown = 13
+            self.key_cooldown = 0.2
             if keys[pygame.K_UP] or keys[pygame.K_z]:
                 self.row_selected = ((self.row_selected - 1) % self.MAX_SELECTED)
             elif keys[pygame.K_DOWN] or keys[pygame.K_s]:
                 self.row_selected = ((self.row_selected + 1) % self.MAX_SELECTED)
         elif self.key_cooldown > 0:
-            self.key_cooldown -= fps_coeff(frequence.get_fps())
+            self.key_cooldown -= delta
 
     def key_down(self, event):
         self.key_cooldown = 0

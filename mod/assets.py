@@ -79,30 +79,27 @@ class GameAssets(Assets):
             "map_tuto": pygame.transform.scale(pygame.image.load("carte.png"), (400 * 4, 400 * 4)).convert_alpha(),
 
             # Player animation with movements
+            "player_bottom": pygame.transform.scale(pygame.image.load("assets/player/player_bottom.png", "player_bottom"), (64, 64*1.5)).convert_alpha(),
+            "player_bottom_0": pygame.transform.scale(pygame.image.load("assets/player/player_bottom.png", "player_bottom"), (64, 64*1.5)).convert_alpha(),
+            "player_bottom_1": pygame.transform.scale(pygame.image.load("assets/player/player_bottom_1.png", "player_bottom_1"), (64, 64*1.5)).convert_alpha(),
+            "player_bottom_2": pygame.transform.scale(pygame.image.load("assets/player/player_bottom_2.png", "player_bottom_2"), (64, 64*1.5)).convert_alpha(),
 
-            "player_down_idle": pygame.image.load("design/game/player/down_idle/idle_down.png", "player_down_idle").convert_alpha(),  # "assets/player.png"
-            "player_down_0": pygame.image.load("design/game/player/down/down_0.png", "player_down_0").convert_alpha(),
-            "player_down_1": pygame.image.load("design/game/player/down/down_1.png", "player_down_1").convert_alpha(),
-            "player_down_2": pygame.image.load("design/game/player/down/down_2.png", "player_down_2").convert_alpha(),
-            "player_down_3": pygame.image.load("design/game/player/down/down_3.png", "player_down_3").convert_alpha(),
+            "player_top": pygame.transform.scale(pygame.image.load("assets/player/player_top.png", "player_top"), (64, 64*1.5)).convert_alpha(),
+            "player_top_0": pygame.transform.scale(pygame.image.load("assets/player/player_top.png", "player_top"), (64, 64*1.5)).convert_alpha(),
+            "player_top_1": pygame.transform.scale(pygame.image.load("assets/player/player_top_1.png", "player_top_1"), (64, 64*1.5)).convert_alpha(),
+            "player_top_2": pygame.transform.scale(pygame.image.load("assets/player/player_top_2.png", "player_top_2"), (64, 64*1.5)).convert_alpha(),
 
-            "player_left_idle": pygame.image.load("design/game/player/left_idle/idle_left.png", "player_down_idle").convert_alpha(),
-            "player_left_0": pygame.image.load("design/game/player/left/left_0.png", "player_left_0").convert_alpha(),
-            "player_left_1": pygame.image.load("design/game/player/left/left_1.png", "player_left_1").convert_alpha(),
-            "player_left_2": pygame.image.load("design/game/player/left/left_2.png", "player_left_2").convert_alpha(),
-            "player_left_3": pygame.image.load("design/game/player/left/left_3.png", "player_left_3").convert_alpha(),
+            "player_left": pygame.transform.scale(pygame.image.load("assets/player/player_left.png", "player_left"), (64, 64*1.5)).convert_alpha(),
+            "player_left_0": pygame.transform.scale(pygame.image.load("assets/player/player_left.png", "player_left_1"), (64, 64*1.5)).convert_alpha(),
+            "player_left_1": pygame.transform.scale(pygame.image.load("assets/player/player_left_1.png", "player_left_1"), (64, 64*1.5)).convert_alpha(),
+            "player_left_2": pygame.transform.scale(pygame.image.load("assets/player/player_left_2.png", "player_left_2"), (64, 64*1.5)).convert_alpha(),
 
-            "player_right_idle": pygame.image.load("design/game/player/right_idle/idle_right.png","player_right_idle").convert_alpha(),
-            "player_right_0": pygame.image.load("design/game/player/right/right_0.png", "player_right_0").convert_alpha(),
-            "player_right_1": pygame.image.load("design/game/player/right/right_1.png", "player_right_1").convert_alpha(),
-            "player_right_2": pygame.image.load("design/game/player/right/right_2.png", "player_right_2").convert_alpha(),
-            "player_right_3": pygame.image.load("design/game/player/right/right_3.png", "player_right_3").convert_alpha(),
+            "player_right": pygame.transform.scale(pygame.image.load("assets/player/player_right.png", "player_right"), (64, 64*1.5)).convert_alpha(),
+            "player_right_0": pygame.transform.scale(pygame.image.load("assets/player/player_right.png", "player_right"), (64, 64*1.5)).convert_alpha(),
+            "player_right_1": pygame.transform.scale(pygame.image.load("assets/player/player_right_1.png", "player_right_1"), (64, 64*1.5)).convert_alpha(),
+            "player_right_2": pygame.transform.scale(pygame.image.load("assets/player/player_right_2.png", "player_right_2"), (64, 64*1.5)).convert_alpha(),
 
-            "player_up_idle": pygame.image.load("design/game/player/up_idle/idle_up.png", "player_up_idle").convert_alpha(),
-            "player_up_0": pygame.image.load("design/game/player/up/up_0.png", "player_up_0").convert_alpha(),
-            "player_up_1": pygame.image.load("design/game/player/up/up_1.png", "player_up_1").convert_alpha(),
-            "player_up_2": pygame.image.load("design/game/player/up/up_2.png", "player_up_2").convert_alpha(),
-            "player_up_3": pygame.image.load("design/game/player/up/up_3.png", "player_up_3").convert_alpha(),
+
         }
 
     def load_images(self):

@@ -5,8 +5,19 @@ from entities.player import Player
 from mod.assets import Assets
 from mod.camera import Camera
 from constants import *
-from typing import Tuple, List
-from mod.utils import determine_collision_move, determine_move, fps_coeff
+from typing import Tuple
+from entities.mod import determine_collision_move, determine_move
+
+
+"""
+
+[!] Code bugué
+
+Il est requis de concevoir un algorithme de recherche de chemin, ce qui est assez gourmand, en temps et en ressources
+
+Par conséquent, dû à la difficulté, il sera implémenté si nous avons du temps supplémentaire.
+
+"""
 
 class Companion(Entity):
     def __init__(self, x = 0, y = 0) -> None:
@@ -16,8 +27,8 @@ class Companion(Entity):
         self.idling = True
         self.ticks = 0
 
-    def update(self, frequence: pygame.time.Clock, player: Player, camera: Camera, map):
-        self.follow_player(frequence, player, camera, map)
+    def update(self, frequence: pygame.time.Clock, player: Player, camera: Camera, map, delta: float):
+        self.follow_player(frequence, player, camera, map, delta)
 
     
     def get_movement_animation(self) -> str:
@@ -40,19 +51,17 @@ class Companion(Entity):
             else:
                 return f"companion_down_{floor(self.animation_frame)}"
 
-    def move(self, movement: Movement, vector: Tuple[int, int], camera: Camera, fps: int | float):
-        self.last_movement_tick = self.ticks * fps_coeff(fps)
+    def move(self, movement: Movement, vector: Tuple[int, int], camera: Camera, delta: float):
+        self.last_movement_tick = self.ticks * delta
 
         if movement != self.movement:
             self.movement = movement
         
         if self.idling:
             self.idling = False
-
-        print(vector)
         
-        self.x -= vector[0] / fps_coeff(fps)
-        self.y -= vector[1] / fps_coeff(fps)
+        self.x -= vector[0]
+        self.y -= vector[1]
 
     def manage_collisions(self, vec: Tuple[int, int], movement: Movement, map) -> Tuple[int, int]:
         for collision in map.actual_zone.collisions:
@@ -84,7 +93,7 @@ class Companion(Entity):
 
         return vec
 
-    def follow_player(self, frequence: pygame.time.Clock, player: Player, camera: Camera, map):
+    def follow_player(self, frequence: pygame.time.Clock, player: Player, camera: Camera, map, delta: float):
         distance_interval = COMPANION_DISTANCE_FROM_PLAYER
 
         px, py = (player.x, player.y)
@@ -125,16 +134,21 @@ class Companion(Entity):
         # self.move(determine_move(vec), vec, camera, frequence.get_fps())
 
         movement = determine_move(vec)
+        
+        print(movement, vec)
+        
+        vec = self.manage_collisions((vec[0] * delta, vec[1] * delta), movement, map)
 
         # Move companion based on his movement
-        decompose_x = determine_collision_move(movement, 0)
+        decompose_x = determine_collision_move(movement, 1)
         if not(decompose_x is None):
-            self.move(movement, self.manage_collisions((vec[0], 0), movement, map), camera, frequence.get_fps())
+            if vec[0] != 0:
+                self.move(movement, (vec[0], 0), camera, frequence.get_fps())
 
-        decompose_y = determine_collision_move(movement, 1)
+        decompose_y = determine_collision_move(movement, 0)
         if not(decompose_y is None):
-            self.move(movement, self.manage_collisions((0, vec[1]), movement, map), camera, frequence.get_fps())
-
+            if vec[1] != 0:
+                self.move(movement, (0, vec[1]), camera, frequence.get_fps())
 
 
 
