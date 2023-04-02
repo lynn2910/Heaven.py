@@ -21,6 +21,7 @@ class GameEngine:
         """
         self.status = GameStatus.MENU
         self.running = True
+        self.LAST_FRAME = 0
 
         self.setup()
 
@@ -50,10 +51,15 @@ class GameEngine:
             self.display.fill((0, 0, 0))
 
     def update(self):
+        # get delta
+        t = pygame.time.get_ticks()
+        delta = (t - self.LAST_FRAME) / 1000.0
+        self.LAST_FRAME = t
+        
         if self.status == GameStatus.MENU:
-            self.menu.update(self.frequence)
+            self.menu.update(self.frequence, delta, self.display)
         elif self.status == GameStatus.GAME:
-            self.game.update(self.frequence)
+            self.game.update(self.frequence, delta)
 
     def exit(self):
         self.running = False

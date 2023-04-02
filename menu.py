@@ -3,7 +3,6 @@ from math import *
 from constants import *
 from enum import Enum
 from categories.options import options
-from mod.utils import fps_coeff
 
 
 class GameStatus(Enum):
@@ -92,21 +91,20 @@ class Menu:
             screen.blit(new_game_ctg, (floor(display_width // 2) - (new_game_ctg.get_width() // 2),
                                        floor(display_height // 4) + self.space_between * 4))
 
-    def update(self, frequence: pygame.time.Clock):
-
+    def update(self, frequence: pygame.time.Clock, delta: float, screen: pygame.Surface):
         if self.ctg_open == MenuCategories.OPTIONS:
-            return options.update(frequence)
+            return options.update(frequence, delta)
 
         # Get keyboard keys
         keys = pygame.key.get_pressed()
         if self.key_cooldown <= 0:
-            self.key_cooldown = 13
+            self.key_cooldown = 0.25
             if keys[pygame.K_UP] or keys[pygame.K_z]:
                 self.category = ((self.category - 1) % 5)
             elif keys[pygame.K_DOWN] or keys[pygame.K_s]:
                 self.category = ((self.category + 1) % 5)
         elif self.key_cooldown > 0:
-            self.key_cooldown -= fps_coeff(frequence.get_fps())
+            self.key_cooldown -= delta
 
     #
     #

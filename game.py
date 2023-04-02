@@ -1,14 +1,13 @@
 from entities.companion import Companion
 from menu import GameStatus
 from mod.assets import GameAssets
+from mod.cinematic import Cinematic, CinematicAsset, CinematicID, CinematicText, Position
 from mod.ui import *
 from entities.mod import *
 from mod.map import *
 from mod.camera import *
 from mod.save import convert_tiled_to_map, open_file
 from mod.inventory import Wood
-from mod.utils import determine_collision_move, fps_coeff
-
 
 #
 #
@@ -45,7 +44,9 @@ class Game:
 
         # Blep
         self.player = Player()
-        self.companion = Companion(self.player.x - (CASE_SIZE * 0.86), self.player.y - (CASE_SIZE * 0.86))
+        
+        # TODO
+        # self.companion = Companion(self.player.x - (CASE_SIZE * 0.86), self.player.y - (CASE_SIZE * 0.86))
 
         self.player.inventory.add_item(Wood())
 
@@ -61,6 +62,57 @@ class Game:
         self.esc_menu_ctg = 0
         self.space_between = 75
         self.key_cooldown = 0
+
+        # Gestion des cinématiques
+        self.cinematics = {
+            CinematicID.BEGINNING: Cinematic(
+                [
+                    CinematicAsset(
+                        "test",
+                        pygame.image.load("assets/ui/cloud_2.png"),
+                        0,
+                        19,
+                        True,
+                        (0,0)
+                    )
+                ],
+                [
+                    CinematicText(
+                        "1",
+                        self.ESC_FONT.render("Elle était tout pour moi...", True, (0,0,0)),
+                        0.5 - 0.15,
+                        4.5 + 0.15,
+                        center=True,
+                        coords=(0,100),
+                        position=Position.BOTTOM
+                    ),
+                    CinematicText(
+                        "2",
+                        self.ESC_FONT.render("...jusqu'à ce moment.", True, (0,0,0)),
+                        4.5 - 0.15 + 1,
+                        9 + 0.15 + 1,
+                        center=True,
+                        coords=(0,100),
+                        position=Position.BOTTOM
+                    ),
+                    CinematicText(
+                        "3",
+                        self.ESC_FONT.render("Kady, me voilà.", True, (0,0,0)),
+                        9 + 0.15 + 2,
+                        14 + 0.15 + 2,
+                        center=True,
+                        coords=(0,100),
+                        position=Position.BOTTOM
+                    )
+                ],
+                19
+            )
+        }
+
+        # TODO
+        self.run_cinematic = True
+        self.actual_cinematic = CinematicID.BEGINNING
+
 
     def draw_esc_menu(self, screen: pygame.Surface, fps: int) -> None:
         if not self.is_escaped: return;
@@ -129,14 +181,16 @@ class Game:
         else:
             opt_ctg = self.ESC_FONT.render("Quitter le jeux", True, (255, 255, 255))
             screen.blit(opt_ctg, (floor(screen_width // 2) - (opt_ctg.get_width() // 2), floor(screen_height // 2) + self.space_between * 1.5))
-       
-
 
 
     def draw(self, screen: pygame.Surface, fps: int) -> None:
+        if self.run_cinematic:
+            cin = self.cinematics[self.actual_cinematic]
+            if not cin.is_ended(): return cin.draw(screen)
+
         screen.fill((0, 0, 0))
 
-        self.map.draw(screen, self.assets, self.camera, self.player, self.companion)
+        self.map.draw(screen, self.assets, self.camera, self.player)
         # self.player.draw(screen, self.assets, self.camera, self.map)
         self.ui.draw(UiDrawArguments(self.player, self.ui_assets, screen))
 
@@ -147,38 +201,49 @@ class Game:
             (20, screen.get_height() - 35)
         )
 
-    def update(self, frequence: pygame.time.Clock) -> None:
+    def update(self, frequence: pygame.time.Clock, delta: float) -> None:
         self.player.x = self.camera.x
         self.player.y = self.camera.y
 
-        if not self.is_escaped: self.movements(frequence)
+        # Cinematique
+        if self.run_cinematic:
+            cin = self.cinematics[self.actual_cinematic]
+            if not cin.is_ended(): return cin.update(frequence, delta)
 
-        self.player.update(frequence)
-        self.companion.update(frequence, self.player, self.camera, self.map)
+        # Si le menu "echap" est ouvert, le joueur ne doit pas se déplacer, alors:
+        if not self.is_escaped: self.movements(frequence, delta)
+
+        self.player.update(frequence, delta)
+        # self.companion.update(frequence, self.player, self.camera, self.map, delta)
         self.ui.update(frequence, self.player, self.map)
 
         
         keys = pygame.key.get_pressed()
         if self.key_cooldown <= 0:
-            self.key_cooldown = 13
+            self.key_cooldown = 0.2
             if keys[pygame.K_UP] or keys[pygame.K_z]:
                 self.esc_menu_ctg = ((self.esc_menu_ctg - 1 ) % 5)
             elif keys[pygame.K_DOWN] or keys[pygame.K_s]:
                 self.esc_menu_ctg = ((self.esc_menu_ctg + 1) % 5)
         elif self.key_cooldown > 0:
-            self.key_cooldown -= fps_coeff(frequence.get_fps())
+            self.key_cooldown -= delta
 
     def key_down(self, event: pygame.event.Event, engine) -> None:
+        if self.run_cinematic:
+            cin = self.cinematics[self.actual_cinematic]
+            if not cin.is_ended(): return cin.key_down(event)
+
+
         if event.key == pygame.K_ESCAPE:
             self.is_escaped = not self.is_escaped
         elif (event.key == pygame.K_e) and (not self.is_escaped):
             self.player.inventory_open = not self.player.inventory_open
         
         elif ((event.key == pygame.K_UP) or (event.key == pygame.K_z)) and self.is_escaped:
-            self.key_cooldown = 13
+            self.key_cooldown = 0.2
             self.esc_menu_ctg = ((self.esc_menu_ctg - 1 ) % 5)
         elif ((event.key == pygame.K_DOWN) or (event.key == pygame.K_s)) and self.is_escaped:
-            self.key_cooldown = 13
+            self.key_cooldown = 0.2
             self.esc_menu_ctg = ((self.esc_menu_ctg + 1) % 5)
         
         elif ((event.key == pygame.K_SPACE) or (event.key == pygame.K_RETURN)) and self.is_escaped:
@@ -196,15 +261,15 @@ class Game:
 
     def manage_collisions(self, vec: Tuple[int, int], movement: Movement) -> Tuple[int, int]:
         for collision in self.map.actual_zone.collisions:
-            top_x = collision[0] + CASE_SIZE
-            top_y = collision[1] + CASE_SIZE
-            bottom_x = -(-top_x + collision[2])
-            bottom_y = -(-top_y + collision[3])
+            top_x = collision.x
+            top_y = collision.y
+            bottom_x = -(-top_x + collision.width)
+            bottom_y = -(-top_y + collision.height)
 
             x = self.player.x + vec[0]
             y = self.player.y + vec[1]
         
-            if (top_x >= x) and (top_y >= y) and (bottom_x <= x + CASE_SIZE) and (bottom_y <= y + CASE_SIZE):
+            if (top_x >= x) and (top_y >= y) and (bottom_x <= x + CASE_SIZE) and (bottom_y <= y + (CASE_SIZE * 1.5)):
                 if movement in [Movement.UP, Movement.UP_LEFT, Movement.UP_RIGHT, Movement.BOTTOM, Movement.BOTTOM_LEFT, Movement.BOTTOM_RIGHT]:
                     vec = (vec[0], 0)
                 if movement in [Movement.RIGHT, Movement.UP_RIGHT, Movement.UP_LEFT, Movement.LEFT, Movement.BOTTOM_LEFT, Movement.BOTTOM_RIGHT]:
@@ -224,7 +289,7 @@ class Game:
 
         return vec
 
-    def movements(self, frequence: pygame.time.Clock) -> None:
+    def movements(self, frequence: pygame.time.Clock, delta: float) -> None:
         keys = pygame.key.get_pressed()
 
         # On vérifie chaque touche (z, q, s, d) pour connaitre le mouvement précis
@@ -248,19 +313,19 @@ class Game:
             # move up right
             vec = (-(self.camera.speed // PLAYER_DIAGONAL_COEFF), self.camera.speed // PLAYER_DIAGONAL_COEFF)
             movement = Movement.UP_RIGHT
-        elif keys[pygame.K_z] and ((not (keys[pygame.K_q] or keys[pygame.K_d])) or (keys[pygame.K_q] and keys[pygame.K_d])):
+        elif keys[pygame.K_z] and ((not (keys[pygame.K_q] or keys[pygame.K_d] or keys[pygame.K_s])) or ((keys[pygame.K_q] and keys[pygame.K_d]) or keys[pygame.K_s])):
             # move only up
             vec = (0, self.camera.speed)
             movement = Movement.UP
-        elif keys[pygame.K_q] and not (keys[pygame.K_z] or keys[pygame.K_s]):
+        elif keys[pygame.K_q] and not (keys[pygame.K_z] or keys[pygame.K_s] or keys[pygame.K_d]):
             # move only left
             vec = (self.camera.speed, 0)
             movement = Movement.LEFT
-        elif keys[pygame.K_d] and not (keys[pygame.K_z] or keys[pygame.K_s]):
+        elif keys[pygame.K_d] and not (keys[pygame.K_z] or keys[pygame.K_s] or keys[pygame.K_q]):
             # move only right
             vec = (-self.camera.speed, 0)
             movement = Movement.RIGHT
-        elif keys[pygame.K_s] and ((not (keys[pygame.K_q] or keys[pygame.K_d])) or (keys[pygame.K_q] and keys[pygame.K_d])):
+        elif keys[pygame.K_s] and ((not (keys[pygame.K_q] or keys[pygame.K_d] or keys[pygame.K_s])) or ((keys[pygame.K_q] and keys[pygame.K_d]) or keys[pygame.K_s])):
             # move only bottom
             vec = (0, -self.camera.speed)
             movement = Movement.BOTTOM
@@ -277,8 +342,8 @@ class Game:
         # Move player based on his movement
         decompose_x = determine_collision_move(movement, 0)
         if not(decompose_x is None):
-            self.player.move(movement, self.manage_collisions((vec[0], 0), movement), self.camera, frequence.get_fps())
+            self.player.move(movement, self.manage_collisions((vec[0] * delta, 0), movement), self.camera, delta)
 
         decompose_y = determine_collision_move(movement, 1)
         if not(decompose_y is None):
-            self.player.move(movement, self.manage_collisions((0, vec[1]), movement), self.camera, frequence.get_fps())
+            self.player.move(movement, self.manage_collisions((0, vec[1] * delta), movement), self.camera, delta)
