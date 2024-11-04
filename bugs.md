@@ -1,0 +1,3 @@
+- Les touches du menu des options étaient inversées (droites et gauches inversées)
+- La configuration des touches dans le menu des options s'enclenchait même quand on n'était pas sur la première page 
+- Le volume des sons n'était pas correctement calculé
